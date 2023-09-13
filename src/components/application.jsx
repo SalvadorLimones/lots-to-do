@@ -1,34 +1,31 @@
-import useTasks from '../lib/use-tasks';
+import { useDeferredValue, useMemo } from 'react';
 import { initialFilters } from '../features/filters';
+import useFilters, { filterTasks } from '../lib/filter-tasks';
+import useTasks from '../lib/use-tasks';
 import Filters from './filters';
 import Tasks from './tasks';
-import useFilters, { filterTasks } from '../lib/filter-tasks';
-import { useMemo, useTransition } from 'react';
 
 const Application = () => {
   const [tasks] = useTasks();
   const [filters, setFilter] = useFilters(initialFilters);
-  const [filterInputs, setFilterInputs] = useFilters(initialFilters);
-  const [isPending, startTransition] =useTransition()
+ const  deferedFilters = useDeferredValue(filters)
+
 
   const visibleTasks = useMemo(
-    () => filterTasks(tasks, filters),
-    [tasks, filters],
+    () => filterTasks(tasks, deferedFilters),
+    [tasks, deferedFilters],
   );
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFilterInputs(name, value);
-    startTransition(()=> {
       setFilter(name, value);
-    })
   };
 
 
   return (
     <main>
-      <Filters filters={filterInputs} onChange={handleChange} />
-      {isPending && <p>Loading</p>}
+      <Filters filters={filters} onChange={handleChange} />
+      {deferedFilters !== filters && <p>Loading</p>}
       <Tasks tasks={visibleTasks} />
     </main>
   );
